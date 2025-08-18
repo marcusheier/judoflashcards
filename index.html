@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Judo Flash Cards — Marcus Heier</title>
+  <meta name="description" content="Practice judo techniques by belt on one page. Study with a clean list, image modal, and Flashcards mode (flip, next/prev, keyboard shortcuts)." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23000'/%3E%3Cpath d='M10 36h44v6H10z' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      /* --- Light palette per your reference screenshot --- */
+      --bg:#2a3140;            /* darker, night-friendly */
+      --panel:#1b212e;         /* dark surface */
+      --muted:#97a1b3;         /* secondary text */
+      --text:#e6eaf2;          /* primary text */
+      --stroke:rgba(255,255,255,.12);
+      --radius:14px;
+      --shadow:0 10px 32px rgba(0,0,0,.35);
+      --gap:16px;
+
+      /* Accents for UI (not belts) */
+      --accent:#2563eb;        /* blue */
+      --accent-2:#0ea5e9;      /* cyan */
+
+      /* Belt colors */
+      --yellow:#facc15;        /* 黄 */
+      --orange:#fb923c;        /* 橙 */
+      --green:#10b981;         /* 緑 */
+      --blue:#3b82f6;          /* 青 */
+      --bluebrown:#a16207;     /* 茶系 */
+      background:
+        radial-gradient(900px 600px at 20% -10%, rgba(45,56,138,.25), transparent 60%),
+        radial-gradient(800px 500px at 110% 0%, rgba(0,174,239,.18), transparent 50%), var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      line-height:1.55;
+    }
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1080px;margin:0 auto;padding:24px}
+
+    /* Header */
+    header{position:sticky;top:0;z-index:50;background:linear-gradient(to bottom, rgba(26,32,41,.9), rgba(26,32,41,.6) 60%, transparent);backdrop-filter:saturate(140%) blur(6px)}
+    .hdr{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px 24px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand h1{margin:0;font-size:20px;letter-spacing:.3px}
+    .byline{color:var(--muted);font-size:13px;margin-left:8px;font-weight:500}
+    .tag{color:var(--muted);font-size:13px}
+
+    /* Filters & actions */
+    .filters{display:flex;flex-wrap:wrap;gap:10px}
+    .chip{background:var(--panel);border:1px solid var(--stroke);padding:8px 12px;border-radius:999px;display:flex;gap:8px;align-items:center;cursor:pointer;user-select:none;box-shadow:none}
+    .chip input{accent-color:var(--accent)}
+    .actions{display:flex;gap:10px}
+
+    .btn{background:var(--panel);border:1px solid var(--stroke);color:var(--text);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,#2d388a,#00aeef);border:0;color:#ffffff;font-weight:700;box-shadow:0 8px 24px rgba(0,174,239,.35)}
+    .btn.ghost{background:transparent;border:1px solid var(--stroke)}
+
+    /* Mobile bottom start button */
+    .start-bottom{position:fixed;left:0;right:0;bottom:10px;display:none;z-index:60;}
+    .start-bottom .inner{max-width:560px;margin:0 auto;display:flex;justify-content:center}
+    .start-bottom .btn{width:90%;height:52px;font-weight:600}
+    @media (max-width: 720px){
+      .start-bottom{display:block}
+    }
+
+    /* Layout: list + study panel */
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
+    @media (max-width: 900px){.grid{grid-template-columns:1fr}}
+
+  /* Mobile-only adjustments while studying */
+  @media (max-width: 900px){
+    body.studying #lists{display:none;}
+    body.studying .study{margin-top:0;}
+  }
+
+    section{background:var(--panel);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+    section + section{margin-top:16px}
+    .belt-title{margin:0 0 8px;font-size:18px;display:flex;align-items:center;gap:8px}
+    .belt-dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+
+    .tech-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin:8px 0 0;padding:0;list-style:none}
+    .tech-link{display:flex;align-items:center;justify-content:center;text-align:center;padding:12px 10px;border-radius:10px;background:#222a37;border:1px solid var(--stroke);min-height:48px;transition:.15s transform ease,.15s border-color ease}
+    .tech-link:hover{transform:translateY(-2px);border-color:rgba(31,36,48,.25)}
+    .tech-link:focus{outline:2px solid var(--accent)}
+
+    /* Study panel (Flashcards) */
+    .study{position:sticky;top:72px;height:calc(100dvh - 96px);display:flex;flex-direction:column;gap:12px}
+    .card{position:relative;flex:1;display:grid;place-items:center;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;box-shadow:var(--shadow);padding:24px;perspective:1200px}
+    .card::before{content:"";position:absolute;inset:-2px;border-radius:20px;background:linear-gradient(135deg,#2d388a,#00aeef);opacity:0;transition:opacity .25s ease;z-index:0}
+    body.studying .card::before{opacity:1}
+    .card > *{position:relative;z-index:1}
+    .card-belt{position:absolute;top:12px;left:12px;right:12px;height:8px;border-radius:999px;background:var(--belt-color,#d1d5db)}
+    .card-inner{position:relative;width:100%;height:100%;max-width:640px;border-radius:16px;display:grid;place-items:center;transform-style:preserve-3d;transition:transform .22s ease}
+    .card.is-flipped .card-inner{transform:rotateY(180deg)}
+    .face{position:absolute;inset:0;border-radius:16px;display:grid;place-items:center;padding:40px 24px 24px;background:#111827;backface-visibility:hidden;border:1px solid var(--stroke)}
+    .face h3{margin:6px 0 10px;font-size:28px;text-align:center}
+    .meta{color:var(--muted);font-size:14px}
+    .back{transform:rotateY(180deg)}
+    .face img{max-width:100%;height:auto;border-radius:12px;border:1px solid var(--stroke)}
+    /* Image slab background for both desktop & mobile */
+    .img-slab{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.2);border-radius:12px;padding:12px}
+    /* Desktop-only: ensure full image fits inside card without cropping */
+    @media (min-width: 901px){
+      /* Desktop: image always fits on screen and within card */
+      .img-slab img{max-height:min(85vh, calc(100% - 24px)); max-width:100%; width:auto; height:auto;}
+    }
+
+    .study-ctrls{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .study-ctrls .btn{height:44px}
+    .hint{font-size:12px;color:var(--muted);text-align:center}
+
+    /* Modal */
+    dialog::backdrop{background:rgba(31,36,48,.45)}
+    dialog{border:1px solid var(--stroke);border-radius:14px;max-width:min(92vw,980px);max-height:92vh;padding:0;background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+    dialog[open]{display:flex;flex-direction:column}
+    .modal-belt{height:6px;background:var(--belt-color,#d1d5db);border-top-left-radius:14px;border-top-right-radius:14px}
+    .modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--stroke)}
+    .modal-body{padding:12px 16px;overflow:auto;display:flex;align-items:center;justify-content:center}
+    .modal-body img{max-width:100%;width:auto;height:auto;display:block;border-radius:10px;border:1px solid var(--stroke);object-fit:contain}
+    @media (min-width: 901px){.modal-body img{max-height:85vh;max-width:88vw;width:auto;height:auto;}}
+
+    /* Belt color scopes for list headings */
+    .yellow .belt-dot{background:var(--yellow)}
+    .orange .belt-dot{background:var(--orange)}
+    .green .belt-dot{background:var(--green)}
+    .blue .belt-dot{background:var(--blue)}
+    .bluebrown .belt-dot{background:var(--bluebrown)}
+
+    /* Japanese tooltip (romaji) */
+    .jp{position:relative; display:inline-block; cursor:help; border-bottom:1px dashed rgba(18,21,27,.25)}
+    .jp:focus{outline:2px solid var(--accent); outline-offset:2px}
+    .jp::after{content:attr(data-romaji); position:absolute; left:50%; bottom:120%; transform:translateX(-50%); background:rgba(0,0,0,.85); color:#fff; font-size:12px; padding:4px 8px; border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s ease}
+    .jp::before{content:""; position:absolute; left:50%; bottom:110%; transform:translateX(-50%); border:6px solid transparent; border-top-color:rgba(0,0,0,.85); opacity:0; transition:opacity .15s ease}
+    .jp:hover::after,.jp:focus::after,.jp:hover::before,.jp:focus::before{opacity:1}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hdr container">
+      <div class="brand">
+        <div class="belt-dot" style="background:linear-gradient(90deg,#0ea5e9,#2563eb)"></div>
+        <div>
+          <h1>Judo Flash Cards <span class="jp" data-romaji="jūdō">柔道</span> <span class="byline">by Marcus Heier</span></h1>
+          <div class="tag">Flip with Space • ←/→ to navigate</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="startFlashcards" class="btn primary">Start Flashcards</button>
+        <button id="stopFlashcards" class="btn ghost" hidden>Exit</button>
+      </div>
+    </div>
+    <div class="container" style="padding-top:0;padding-bottom:12px">
+      <div class="filters" aria-label="Belt filters">
+        <label class="chip"><input type="checkbox" value="yellow" checked> Yellow</label>
+        <label class="chip"><input type="checkbox" value="orange" checked> Orange</label>
+        <label class="chip"><input type="checkbox" value="green" checked> Green</label>
+        <label class="chip"><input type="checkbox" value="blue" checked> Blue</label>
+        <label class="chip"><input type="checkbox" value="bluebrown" checked> Blue/Brown</label>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile bottom Start button -->
+  <div class="start-bottom" id="startBottom">
+    <div class="inner">
+      <button id="startFlashcardsMobile" class="btn primary">Start Flashcards</button>
+    </div>
+  </div>
+
+  <main class="container grid" id="app">
+    <!-- Left: Lists by belt (click opens modal) -->
+    <div id="lists">
+      <!-- YELLOW -->
+      <section class="yellow" aria-labelledby="belt-yellow">
+        <h2 class="belt-title" id="belt-yellow"><span class="belt-dot"></span> Yellow belt</h2>
+        <div style="margin:6px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Nage-Waza</div>
+        <ul class="tech-list" data-belt="yellow">
+          <li><a href="pictures/o-soto-otoshi.png" class="tech-link" data-name="O-soto-otoshi">O-soto-otoshi</a></li>
+          <li><a href="pictures/o-uchi-gari.png" class="tech-link" data-name="O-uchi-gari">O-uchi-gari</a></li>
+          <li><a href="pictures/o-goshi.png" class="tech-link" data-name="O-goshi">O-goshi</a></li>
+          <li><a href="pictures/ko-soto-gari.png" class="tech-link" data-name="Ko-soto-gari">Ko-soto-gari</a></li>
+          <li><a href="pictures/ko-uchi-gari.png" class="tech-link" data-name="Ko-uchi-gari">Ko-uchi-gari</a></li>
+          <li><a href="pictures/hiza-guruma.png" class="tech-link" data-name="Hiza-guruma">Hiza-guruma</a></li>
+          <li><a href="pictures/eri-seoi-nage.png" class="tech-link" data-name="Eri-seoi-nage">Eri-seoi-nage</a></li>
+          <li><a href="pictures/koshi-guruma.png" class="tech-link" data-name="Koshi-guruma">Koshi-guruma</a></li>
+        </ul>
+        <div style="margin:10px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Osae-komi- / Shime- / Kansetsu- Waza</div>
+        <ul class="tech-list" data-belt="yellow">
+          <li><a href="pictures/mune-gatame.png" class="tech-link" data-name="Mune-gatame">Mune-gatame</a></li>
+          <li><a href="pictures/kuzure-kesa-gatame.png" class="tech-link" data-name="Kuzure-kesa-gatame">Kuzure-kesa-gatame</a></li>
+          <li><a href="pictures/kami-shiho-gatame.png" class="tech-link" data-name="Kami-shiho-gatame">Kami-shiho-gatame</a></li>
+          <li><a href="pictures/tate-shiho-gatame.png" class="tech-link" data-name="Tate-shiho-gatame">Tate-shiho-gatame</a></li>
+        </ul>
+      </section>
+
+      <!-- ORANGE -->
+      <section class="orange" aria-labelledby="belt-orange">
+        <h2 class="belt-title" id="belt-orange"><span class="belt-dot"></span> Orange belt</h2>
+        <div style="margin:6px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Nage-Waza</div>
+        <ul class="tech-list" data-belt="orange">
+          <li><a href="pictures/de-ashi-barai.png" class="tech-link" data-name="De-ashi-harai">De-ashi-harai</a></li>
+          <li><a href="pictures/ko-soto-gake.png" class="tech-link" data-name="Ko-soto-gake">Ko-soto-gake</a></li>
+          <li><a href="pictures/ippon-seoi-nage.png" class="tech-link" data-name="Ippon-seoi-nage">Ippon-seoi-nage</a></li>
+          <li><a href="pictures/morote-seoi-nage.png" class="tech-link" data-name="Morote-seoi-nage">Morote-seoi-nage</a></li>
+          <li><a href="pictures/tsuri-komi-goshi.png" class="tech-link" data-name="Tsuri-komi-goshi">Tsuri-komi-goshi</a></li>
+          <li><a href="pictures/kubi-nage.png" class="tech-link" data-name="Kubi-nage">Kubi-nage</a></li>
+          <li><a href="pictures/o-soto-gari.png" class="tech-link" data-name="O-soto-gari">O-soto-gari</a></li>
+          <li><a href="pictures/tsuri-goshi.png" class="tech-link" data-name="Tsuri-goshi">Tsuri-goshi</a></li>
+          <li><a href="pictures/tai-otoshi.png" class="tech-link" data-name="Tai-otoshi">Tai-otoshi</a></li>
+          <li><a href="pictures/uchi-mata.png" class="tech-link" data-name="Uchi-mata (hip)">Uchi-mata (hip)</a></li>
+          <li><a href="pictures/harai-goshi.png" class="tech-link" data-name="Harai-goshi">Harai-goshi</a></li>
+        </ul>
+        <div style="margin:10px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Osae-komi- / Shime- / Kansetsu- Waza</div>
+        <ul class="tech-list" data-belt="orange">
+          <li><a href="pictures/ushiro-kesa-gatame.png" class="tech-link" data-name="Ushiro-kesa-gatame">Ushiro-kesa-gatame</a></li>
+          <li><a href="pictures/kuzure-yoko-shiho-gatame.png" class="tech-link" data-name="Kuzure-yoko-shiho-gatame">Kuzure-yoko-shiho-gatame</a></li>
+          <li><a href="pictures/yoko-shiho-gatame.png" class="tech-link" data-name="Yoko-shiho-gatame">Yoko-shiho-gatame</a></li>
+          <li><a href="pictures/kesa-gatame.png" class="tech-link" data-name="Kesa-gatame">Kesa-gatame</a></li>
+          <li><a href="pictures/gyaku-juji-jime.png" class="tech-link" data-name="Gyaku-juji-jime">Gyaku-juji-jime</a></li>
+          <li><a href="pictures/nami-juji-jime.png" class="tech-link" data-name="Nami-juji-jime">Nami-juji-jime</a></li>
+          <li><a href="pictures/kata-juji-jime.png" class="tech-link" data-name="Kata-juji-jime">Kata-juji-jime</a></li>
+          <li><a href="pictures/ude-garami.png" class="tech-link" data-name="Ude-garami">Ude-garami</a></li>
+          <li><a href="pictures/juji-gatame.png" class="tech-link" data-name="Juji-gatame">Juji-gatame</a></li>
+        </ul>
+      </section>
+
+      <!-- GREEN -->
+      <section class="green" aria-labelledby="belt-green">
+        <h2 class="belt-title" id="belt-green"><span class="belt-dot"></span> Green belt</h2>
+        <div style="margin:6px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Nage-Waza</div>
+        <ul class="tech-list" data-belt="green">
+          <li><a href="pictures/okuri-ashi-barai.png" class="tech-link" data-name="Okuri-ashi-barai">Okuri-ashi-barai</a></li>
+          <li><a href="pictures/sasae-tsuri-komi-ashi.png" class="tech-link" data-name="Sasae-tsuri-komi-ashi">Sasae-tsuri-komi-ashi</a></li>
+          <li><a href="pictures/uki-goshi.png" class="tech-link" data-name="Uki-goshi">Uki-goshi</a></li>
+          <li><a href="pictures/sode-tsuri-komi-goshi.png" class="tech-link" data-name="Sode-tsuri-komi-goshi">Sode-tsuri-komi-goshi</a></li>
+          <li><a href="pictures/seoi-otoshi.png" class="tech-link" data-name="Seoi-otoshi">Seoi-otoshi</a></li>
+          <li><a href="pictures/harai-tsuri-komi-ashi.png" class="tech-link" data-name="Harai-tsuri-komi-ashi">Harai-tsuri-komi-ashi</a></li>
+          <li><a href="pictures/tani-otoshi.png" class="tech-link" data-name="Tani-otoshi">Tani-otoshi</a></li>
+          <li><a href="pictures/yoko-sumi-gaeshi.gif" class="tech-link" data-name="Yoko-sumi-gaeshi">Yoko-sumi-gaeshi</a></li>
+          <li><a href="pictures/tomoe-nage.png" class="tech-link" data-name="Tomoe-nage">Tomoe-nage</a></li>
+          <li><a href="pictures/yoko-tomoe-nage.gif" class="tech-link" data-name="Yoko-tomoe-nage">Yoko-tomoe-nage</a></li>
+        </ul>
+        <div style="margin:10px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Osae-komi- / Shime- / Kansetsu- Waza</div>
+        <ul class="tech-list" data-belt="green">
+          <li><a href="pictures/kuzure-kami-shiho-gatame.png" class="tech-link" data-name="Kuzure-kami-shiho-gatame">Kuzure-kami-shiho-gatame</a></li>
+          <li><a href="pictures/hadaka-jime.png" class="tech-link" data-name="Hadaka-jime">Hadaka-jime</a></li>
+          <li><a href="pictures/okuri-eri-jime.png" class="tech-link" data-name="Okuri-eri-jime">Okuri-eri-jime</a></li>
+          <li><a href="pictures/ude-gatame.png" class="tech-link" data-name="Ude-gatame">Ude-gatame</a></li>
+          <li><a href="pictures/kuzure-tate-shiho-gatame.png" class="tech-link" data-name="Kuzure-tate-shiho-gatame">Kuzure-tate-shiho-gatame</a></li>
+          <li><a href="pictures/kata-ha-jime.png" class="tech-link" data-name="Kata-ha-jime">Kata-ha-jime</a></li>
+          <li><a href="pictures/ryote-jime.png" class="tech-link" data-name="Ryote-jime">Ryote-jime</a></li>
+          <li><a href="pictures/kesa-garami.png" class="tech-link" data-name="Kesa-garami">Kesa-garami</a></li>
+          <li><a href="pictures/ashi-gatame.png" class="tech-link" data-name="Ashi-gatame">Ashi-gatame</a></li>
+        </ul>
+      </section>
+
+      <!-- BLUE -->
+      <section class="blue" aria-labelledby="belt-blue">
+        <h2 class="belt-title" id="belt-blue"><span class="belt-dot"></span> Blue belt</h2>
+        <div style="margin:6px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Nage-Waza</div>
+        <ul class="tech-list" data-belt="blue">
+          <li><a href="pictures/o-guruma.png" class="tech-link" data-name="O-guruma">O-guruma</a></li>
+          <li><a href="pictures/ashi-guruma.png" class="tech-link" data-name="Ashi-guruma">Ashi-guruma</a></li>
+          <li><a href="pictures/sumi-gaeshi.png" class="tech-link" data-name="Sumi-gaeshi">Sumi-gaeshi</a></li>
+          <li><a href="pictures/uki-waza.png" class="tech-link" data-name="Uki-waza">Uki-waza</a></li>
+          <li><a href="pictures/yoko-otoshi.png" class="tech-link" data-name="Yoko-otoshi">Yoko-otoshi</a></li>
+          <li><a href="pictures/ushiro-goshi.png" class="tech-link" data-name="Ushiro-goshi">Ushiro-goshi</a></li>
+          <li><a href="pictures/soto-makikomi.png" class="tech-link" data-name="Soto-makikomi">Soto-makikomi</a></li>
+          <li><a href="pictures/uchi-mata.png" class="tech-link" data-name="Uchi-mata 'leg variation'">Uchi-mata 'leg variation'</a></li>
+          <li><a href="pictures/hane-goshi.png" class="tech-link" data-name="Hane-goshi">Hane-goshi</a></li>
+          <li><a href="pictures/tsubame-gaeshi.png" class="tech-link" data-name="Tsubame-gaeshi">Tsubame-gaeshi</a></li>
+          <li><a href="pictures/ura-nage.png" class="tech-link" data-name="Ura-nage">Ura-nage</a></li>
+          <li><a href="pictures/yoko-guruma.png" class="tech-link" data-name="Yoko-guruma">Yoko-guruma</a></li>
+          <li><a href="pictures/yoko-gake.png" class="tech-link" data-name="Yoko-gake">Yoko-gake</a></li>
+        </ul>
+        <div style="margin:10px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Osae-komi- / Shime- / Kansetsu- Waza</div>
+        <ul class="tech-list" data-belt="blue">
+          <li><a href="pictures/makura-kesa-gatame.png" class="tech-link" data-name="Makura-kesa-gatame">Makura-kesa-gatame</a></li>
+          <li><a href="pictures/sankaku-gatame.png" class="tech-link" data-name="Sankaku-gatame">Sankaku-gatame</a></li>
+          <li><a href="pictures/kata-te-jime.png" class="tech-link" data-name="Kata-te-jime">Kata-te-jime</a></li>
+          <li><a href="pictures/sankaku-jime.png" class="tech-link" data-name="Sankaku-jime">Sankaku-jime</a></li>
+          <li><a href="pictures/hara-gatame.png" class="tech-link" data-name="Hara-gatame">Hara-gatame</a></li>
+          <li><a href="pictures/waki-gatame.png" class="tech-link" data-name="Waki-gatame">Waki-gatame</a></li>
+          <li><a href="pictures/kata-gatame.png" class="tech-link" data-name="Kata-gatame">Kata-gatame</a></li>
+          <li><a href="pictures/uki-gatame.png" class="tech-link" data-name="Uki-gatame">Uki-gatame</a></li>
+          <li><a href="pictures/sode-guruma-jime.png" class="tech-link" data-name="Sode-guruma-jime">Sode-guruma-jime</a></li>
+          <li><a href="pictures/tsukomi-jime.png" class="tech-link" data-name="Tsukomi-jime">Tsukomi-jime</a></li>
+          <li><a href="pictures/kannuki-gatame.png" class="tech-link" data-name="Kannuki-gatame">Kannuki-gatame</a></li>
+          <li><a href="pictures/hiza-gatame.png" class="tech-link" data-name="Hiza-gatame">Hiza-gatame</a></li>
+        </ul>
+      </section>
+
+      <!-- BLUE/BROWN -->
+      <section class="bluebrown" aria-labelledby="belt-bluebrown">
+        <h2 class="belt-title" id="belt-bluebrown"><span class="belt-dot"></span> Blue / Brown belt</h2>
+        <div style="margin:6px 0 6px;color:var(--muted);font-size:13px;font-weight:600">Nage-Waza</div>
+        <ul class="tech-list" data-belt="bluebrown">
+          <li><a href="pictures/utsuri-goshi.png" class="tech-link" data-name="Utsuri-goshi">Utsuri-goshi</a></li>
+          <li><a href="pictures/o-soto-guruma.png" class="tech-link" data-name="O-soto-guruma">O-soto-guruma</a></li>
+          <li><a href="pictures/uki-otoshi.png" class="tech-link" data-name="Uki-otoshi">Uki-otoshi</a></li>
+          <li><a href="pictures/sumi-otoshi.png" class="tech-link" data-name="Sumi-otoshi">Sumi-otoshi</a></li>
+          <li><a href="pictures/yoko-wakare.png" class="tech-link" data-name="Yoko-wakare">Yoko-wakare</a></li>
+          <li><a href="pictures/kata-guruma.png" class="tech-link" data-name="Kata-guruma">Kata-guruma</a></li>
+      </section>
+    </div>
+
+    <!-- Right: Study panel -->
+    <aside class="study" aria-label="Flashcards study panel">
+      <div class="card" id="card" aria-live="polite">
+        <div class="card-belt" id="cardBelt"></div>
+        <div class="card-inner" id="cardInner">
+          <div class="face front">
+            <div>
+              <h3 id="frontName">Select belts and press “Start Flashcards”.</h3>
+              <div class="meta" id="frontMeta">Tap card to flip (mobile) • Space to flip (desktop) • ←/→ to navigate</div>
+            </div>
+          </div>
+          <div class="face back">
+            <div id="backContent" style="text-align:center"></div>
+          </div>
+        </div>
+      </div>
+      <div class="study-ctrls">
+        <button class="btn" id="btnPrev" title="Previous (←)">Previous</button>
+        <button class="btn" id="btnFlip" title="Flip (Space)">Flip</button>
+        <button class="btn" id="btnNext" title="Next (→)">Next</button>
+        <button class="btn ghost" id="btnView" title="View image">View image</button>
+      </div>
+      <div class="hint" id="progressHint">0 / 0</div>
+    </aside>
+  </main>
+
+  <!-- Image Modal -->
+  <dialog id="imgModal" aria-label="Technique image">
+    <div class="modal-belt" id="modalBelt"></div>
+    <div class="modal-hdr">
+      <div id="modalTitle">Technique</div>
+      <button class="btn ghost" id="closeModal">Close</button>
+    </div>
+    <div class="modal-body">
+      <img id="modalImg" alt="Technique image" loading="lazy" />
+      <div style="margin-top:10px;font-size:13px;color:var(--muted)">
+        <a id="openNewTab" href="#" target="_blank" rel="noopener">Open in new tab</a>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    // ------- Collect techniques from the DOM ---------
+    function collectTechniques(){
+      const belts = ['yellow','orange','green','blue','bluebrown'];
+      const items = [];
+      belts.forEach(b => {
+        document.querySelectorAll(`[data-belt="${b}"] .tech-link`).forEach(a => {
+          items.push({
+            belt:b,
+            name:a.dataset.name || a.textContent.trim(),
+            href:a.getAttribute('href')
+          });
+        });
+      });
+      return items;
+    }
+
+    // Map belt -> color variable value
+    const BELT_COLOR = {
+      yellow: getComputedStyle(document.documentElement).getPropertyValue('--yellow').trim(),
+      orange: getComputedStyle(document.documentElement).getPropertyValue('--orange').trim(),
+      green:  getComputedStyle(document.documentElement).getPropertyValue('--green').trim(),
+      blue:   getComputedStyle(document.documentElement).getPropertyValue('--blue').trim(),
+      bluebrown: getComputedStyle(document.documentElement).getPropertyValue('--bluebrown').trim()
+    };
+
+    // ------- Belt filter logic ---------
+    const filterInputs = Array.from(document.querySelectorAll('.filters input[type="checkbox"]'));
+    function getActiveBelts(){
+      return filterInputs.filter(i=>i.checked).map(i=>i.value);
+    }
+    function applyListFilter(){
+      const active = new Set(getActiveBelts());
+      document.querySelectorAll('[data-belt]').forEach(ul => {
+        const show = active.has(ul.dataset.belt);
+        ul.parentElement.style.display = show ? '' : 'none';
+      });
+    }
+    filterInputs.forEach(i=>i.addEventListener('change', applyListFilter));
+    applyListFilter();
+
+    // ------- Modal (image lightbox) ---------
+    const modal = document.getElementById('imgModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const openNewTab = document.getElementById('openNewTab');
+    const modalBelt = document.getElementById('modalBelt');
+    document.getElementById('closeModal').addEventListener('click', ()=> modal.close());
+    // Intercept clicks on list items to open modal instead of navigating away
+    document.getElementById('lists').addEventListener('click', (e)=>{
+      const a = e.target.closest('a.tech-link');
+      if(!a) return;
+      e.preventDefault();
+      showModal(a.dataset.name || a.textContent.trim(), a.href, a.closest('[data-belt]').dataset.belt);
+    });
+    // Click on backdrop closes
+    modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.close(); });
+    // Esc key cancel handler (ensures close)
+    modal.addEventListener('cancel', (e)=>{ e.preventDefault(); modal.close(); });
+    // Click on backdrop closes
+    modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.close(); });
+    // Esc key should close (safety in case UA behavior is overridden)
+    modal.addEventListener('cancel', (e)=>{ e.preventDefault(); modal.close(); });
+
+    function showModal(name, href, belt){
+      modalTitle.textContent = name;
+      modalImg.src = href; // same path you already use
+      modalImg.alt = name;
+      openNewTab.href = href;
+      const c = BELT_COLOR[belt] || '#d1d5db';
+      modal.style.setProperty('--belt-color', c);
+      modalBelt.style.background = c;
+      if(typeof modal.showModal === 'function'){ modal.showModal(); } else { modal.setAttribute('open',''); }
+    }
+
+    // ------- Flashcards engine (simple) ---------
+    const startBtn = document.getElementById('startFlashcards');
+    const startBtnMobile = document.getElementById('startFlashcardsMobile');
+    const startBottom = document.getElementById('startBottom');
+    const stopBtn = document.getElementById('stopFlashcards');
+    const card = document.getElementById('card');
+    const cardInner = document.getElementById('cardInner');
+    const cardBelt = document.getElementById('cardBelt');
+    const frontName = document.getElementById('frontName');
+    const frontMeta = document.getElementById('frontMeta');
+    const backContent = document.getElementById('backContent');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnFlip = document.getElementById('btnFlip');
+    const btnNext = document.getElementById('btnNext');
+    const btnView = document.getElementById('btnView');
+    const progressHint = document.getElementById('progressHint');
+
+    let deck = []; // {belt,name,href}
+    let idx = 0;
+    let flipped = false;
+
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function setBeltAccent(belt){
+      const c = BELT_COLOR[belt] || '#d1d5db';
+      card.style.setProperty('--belt-color', c);
+      cardBelt.style.background = c;
+    }
+
+    function start(){
+      const isMobile = window.matchMedia('(max-width: 900px)').matches;
+      const all = collectTechniques();
+      const active = new Set(getActiveBelts());
+      deck = all.filter(t => active.has(t.belt));
+      if(deck.length===0){
+        alert('Select at least one belt to start.');
+        return;
+      }
+      shuffle(deck);
+      idx = 0; flipped = false;
+      stopBtn.hidden = false; startBtn.hidden = true; if(startBtnMobile) startBtnMobile.hidden = true; startBottom.style.display='none';
+      document.body.classList.add('studying');
+      if(isMobile){
+        // Jump user to the top so the study panel is immediately visible
+        window.scrollTo({top:0, behavior:'smooth'});
+      }
+      render();
+    }
+
+    function stop(){
+      deck = []; idx = 0; flipped = false;
+      startBtn.hidden = false; stopBtn.hidden = true; if(startBtnMobile) startBtnMobile.hidden = false; startBottom.style.display='block';
+      frontName.textContent = 'Select belts and press “Start Flashcards”.';
+      frontMeta.textContent = 'Tap (mobile) / Space (desktop) to flip • ←/→ to navigate';
+      backContent.innerHTML = '';
+      card.classList.remove('is-flipped');
+      card.style.removeProperty('--belt-color');
+      document.body.classList.remove('studying');
+      progressHint.textContent = '0 / 0';
+    }
+
+    function render(){
+      const t = deck[idx];
+      frontName.textContent = t.name;
+      frontMeta.textContent = t.belt.toUpperCase();
+      backContent.innerHTML = `<div class="img-slab"><img src="${t.href}" alt="${t.name}"></div>`;
+      progressHint.textContent = `${idx+1} / ${deck.length}`;
+      setBeltAccent(t.belt);
+      if(flipped) card.classList.add('is-flipped'); else card.classList.remove('is-flipped');
+    }
+
+    function next(){
+      if(!deck.length) return;
+      if(flipped){ // unflip first to avoid glimpse, then advance
+        flipped = false;
+        card.classList.remove('is-flipped');
+        setTimeout(()=>{ idx = (idx+1)%deck.length; render(); }, 230); // wait for flip transition
+      } else {
+        idx = (idx+1)%deck.length; render();
+      }
+    }
+    function prev(){
+      if(!deck.length) return;
+      if(flipped){
+        flipped = false;
+        card.classList.remove('is-flipped');
+        setTimeout(()=>{ idx = (idx-1+deck.length)%deck.length; render(); }, 230);
+      } else {
+        idx = (idx-1+deck.length)%deck.length; render();
+      }
+    }
+    function flip(){ if(deck.length){ flipped = !flipped; card.classList.toggle('is-flipped'); } }
+
+    startBtn.addEventListener('click', start);
+    if(startBtnMobile) startBtnMobile.addEventListener('click', start);
+    stopBtn.addEventListener('click', stop);
+    btnNext.addEventListener('click', next);
+    btnPrev.addEventListener('click', prev);
+    btnFlip.addEventListener('click', flip);
+    btnView.addEventListener('click', ()=>{
+      if(!deck.length) return; const t = deck[idx]; showModal(t.name, t.href, t.belt);
+    });
+
+    // Keyboard controls
+    window.addEventListener('keydown', (e)=>{
+      if(e.key===' '){ e.preventDefault(); flip(); }
+      else if(e.key==='ArrowRight'){ next(); }
+      else if(e.key==='ArrowLeft'){ prev(); }
+      else if(e.key==='Escape' && modal.open){ modal.close(); }
+    });
+
+    // Mobile gestures: tap to flip, swipe left/right for next/prev
+    let touchX = null;
+    card.addEventListener('click', ()=> flip());
+    card.addEventListener('touchstart', (e)=>{ touchX = e.changedTouches[0].clientX; }, {passive:true});
+    card.addEventListener('touchend', (e)=>{
+      const dx = e.changedTouches[0].clientX - touchX;
+      const TH = 40; // threshold px
+      if(Math.abs(dx) < TH) return; // small move -> ignore
+      if(dx < 0) next(); else prev();
+    }, {passive:true});
+  </script>
+</body>
+</html>
