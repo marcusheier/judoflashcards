@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Judo Flash Cards — Marcus Heier</title>
+  <title>Judo Flash Cards</title>
   <meta name="description" content="Practice judo techniques by belt on one page. Study with a clean list, image modal, and Flashcards mode (flip, next/prev, keyboard shortcuts)." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23000'/%3E%3Cpath d='M10 36h44v6H10z' fill='%23fff'/%3E%3C/svg%3E">
   <style>
@@ -133,6 +133,8 @@
     .jp::after{content:attr(data-romaji); position:absolute; left:50%; bottom:120%; transform:translateX(-50%); background:rgba(0,0,0,.85); color:#fff; font-size:12px; padding:4px 8px; border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s ease}
     .jp::before{content:""; position:absolute; left:50%; bottom:110%; transform:translateX(-50%); border:6px solid transparent; border-top-color:rgba(0,0,0,.85); opacity:0; transition:opacity .15s ease}
     .jp:hover::after,.jp:focus::after,.jp:hover::before,.jp:focus::before{opacity:1}
+
+    .byline{display:inline-flex;align-items:center;gap:6px;margin-left:10px;padding:4px 15px 4px 0px;border-radius:999px;border:0px solid var(--stroke);font-size:12px;color:#ffffff4e(--text);text-decoration:none;line-height:1}
   </style>
 </head>
 <body>
@@ -141,7 +143,9 @@
       <div class="brand">
         <div class="belt-dot" style="background:linear-gradient(90deg,#0ea5e9,#2563eb)"></div>
         <div>
-          <h1>Judo Flash Cards <span class="jp" data-romaji="jūdō">柔道</span> <span class="byline">by Marcus Heier</span></h1>
+          <h1>Judo Flash Cards <span class="jp" data-romaji="jūdō">柔道</span><span class="byline">by Marcus Heier</span>
+            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Buy Marcus a Coffee', '#8297ff', 'B0B41JWO97');kofiwidget2.draw();</script> 
+          </h1>
           <div class="tag">Flip with Space • ←/→ to navigate</div>
         </div>
       </div>
