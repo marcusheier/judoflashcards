@@ -7,7 +7,6 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-65TKK711NK');
   </script>
   <meta charset="utf-8" />
@@ -61,16 +60,18 @@
     .chip input{accent-color:var(--accent)}
     .actions{display:flex;gap:10px}
 
-    .btn{background:var(--panel);border:1px solid var(--stroke);color:var(--text);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);cursor:pointer}
+    .btn{background:var(--panel);border:1px solid var(--stroke);color:var(--text);padding:12px 18px;border-radius:10px;box-shadow:var(--shadow);cursor:pointer}
     .btn.primary{background:linear-gradient(135deg,#2d388a,#00aeef);border:0;color:#ffffff;font-weight:700;box-shadow:0 8px 24px rgba(0,174,239,.35)}
     .btn.ghost{background:transparent;border:1px solid var(--stroke)}
+    .btn.exit{background:linear-gradient(135deg,#4c0c0c,#c13838);border:0;color:#ffffff;font-weight:700;box-shadow:0 8px 24px rgba(220,38,38,.35)}
 
-    /* Mobile bottom start button */
-    .start-bottom{position:fixed;left:0;right:0;bottom:10px;display:none;z-index:60;}
+    /* Bottom start button (mobile and desktop) */
+    .start-bottom{position:fixed;left:0;right:0;bottom:10px;display:block;z-index:60;}
     .start-bottom .inner{max-width:560px;margin:0 auto;display:flex;justify-content:center}
     .start-bottom .btn{width:90%;height:52px;font-weight:600}
     @media (max-width: 720px){
-      .start-bottom{display:block}
+      /* Mobile: header should not be sticky */
+      header{position:static;top:auto}
     }
 
     /* Layout: list + study panel */
@@ -115,7 +116,7 @@
       .img-slab img{max-height:min(85vh, calc(100% - 24px)); max-width:100%; width:auto; height:auto;}
     }
 
-    .study-ctrls{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .study-ctrls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;justify-content:center;max-width:300px;margin:0 auto}
     .study-ctrls .btn{height:44px}
     .hint{font-size:12px;color:var(--muted);text-align:center}
 
@@ -153,14 +154,13 @@
         <div class="belt-dot" style="background:linear-gradient(90deg,#0ea5e9,#2563eb)"></div>
         <div>
           <h1>Judo Flash Cards <span class="jp" data-romaji="jūdō">柔道</span><span class="byline">by Marcus Heier</span>
-            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Buy me a Coffee', '#8297ff', 'B0B41JWO97');kofiwidget2.draw();</script> 
+            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Buy Marcus a Coffee', '#8297ff', 'B0B41JWO97');kofiwidget2.draw();</script> 
           </h1>
           <div class="tag">Flip with Space • ←/→ to navigate</div>
         </div>
       </div>
       <div class="actions">
-        <button id="startFlashcards" class="btn primary">Start Flashcards</button>
-        <button id="stopFlashcards" class="btn ghost" hidden>Exit</button>
+        <!-- Top buttons removed - only bottom button will be used -->
       </div>
     </div>
     <div class="container" style="padding-top:0;padding-bottom:12px">
@@ -174,10 +174,11 @@
     </div>
   </header>
 
-  <!-- Mobile bottom Start button -->
+  <!-- Bottom Start/Exit button -->
   <div class="start-bottom" id="startBottom">
     <div class="inner">
       <button id="startFlashcardsMobile" class="btn primary">Start Flashcards</button>
+      <button id="stopFlashcardsMobile" class="btn exit" hidden>Exit</button>
     </div>
   </div>
 
@@ -338,7 +339,6 @@
         <button class="btn" id="btnPrev" title="Previous (←)">Previous</button>
         <button class="btn" id="btnFlip" title="Flip (Space)">Flip</button>
         <button class="btn" id="btnNext" title="Next (→)">Next</button>
-        <button class="btn ghost" id="btnView" title="View image">View image</button>
       </div>
       <div class="hint" id="progressHint">0 / 0</div>
     </aside>
@@ -435,10 +435,9 @@
     }
 
     // ------- Flashcards engine (simple) ---------
-    const startBtn = document.getElementById('startFlashcards');
     const startBtnMobile = document.getElementById('startFlashcardsMobile');
+    const stopBtnMobile = document.getElementById('stopFlashcardsMobile');
     const startBottom = document.getElementById('startBottom');
-    const stopBtn = document.getElementById('stopFlashcards');
     const card = document.getElementById('card');
     const cardInner = document.getElementById('cardInner');
     const cardBelt = document.getElementById('cardBelt');
@@ -448,7 +447,6 @@
     const btnPrev = document.getElementById('btnPrev');
     const btnFlip = document.getElementById('btnFlip');
     const btnNext = document.getElementById('btnNext');
-    const btnView = document.getElementById('btnView');
     const progressHint = document.getElementById('progressHint');
 
     let deck = []; // {belt,name,href}
@@ -480,7 +478,7 @@
       }
       shuffle(deck);
       idx = 0; flipped = false;
-      stopBtn.hidden = false; startBtn.hidden = true; if(startBtnMobile) startBtnMobile.hidden = true; startBottom.style.display='none';
+      startBtnMobile.hidden = true; stopBtnMobile.hidden = false;
       document.body.classList.add('studying');
       if(isMobile){
         // Jump user to the top so the study panel is immediately visible
@@ -491,7 +489,7 @@
 
     function stop(){
       deck = []; idx = 0; flipped = false;
-      startBtn.hidden = false; stopBtn.hidden = true; if(startBtnMobile) startBtnMobile.hidden = false; startBottom.style.display='block';
+      startBtnMobile.hidden = false; stopBtnMobile.hidden = true;
       frontName.textContent = 'Select belts and press “Start Flashcards”.';
       frontMeta.textContent = 'Tap (mobile) / Space (desktop) to flip • ←/→ to navigate';
       backContent.innerHTML = '';
@@ -533,15 +531,11 @@
     }
     function flip(){ if(deck.length){ flipped = !flipped; card.classList.toggle('is-flipped'); } }
 
-    startBtn.addEventListener('click', start);
-    if(startBtnMobile) startBtnMobile.addEventListener('click', start);
-    stopBtn.addEventListener('click', stop);
+    startBtnMobile.addEventListener('click', start);
+    stopBtnMobile.addEventListener('click', stop);
     btnNext.addEventListener('click', next);
     btnPrev.addEventListener('click', prev);
     btnFlip.addEventListener('click', flip);
-    btnView.addEventListener('click', ()=>{
-      if(!deck.length) return; const t = deck[idx]; showModal(t.name, t.href, t.belt);
-    });
 
     // Keyboard controls
     window.addEventListener('keydown', (e)=>{
@@ -561,6 +555,15 @@
       if(Math.abs(dx) < TH) return; // small move -> ignore
       if(dx < 0) next(); else prev();
     }, {passive:true});
+
+    // Initialize button visibility on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const isMobile = window.matchMedia('(max-width: 720px)').matches;
+      if (!isMobile) {
+        // Ensure bottom start button is visible on desktop
+        startBottom.style.display = 'block';
+      }
+    });
   </script>
 </body>
 </html>
