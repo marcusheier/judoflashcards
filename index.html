@@ -5,7 +5,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-65TKK711NK"></script>
   <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
+  function gtag(){dataLayer.push(arguments);} 
   gtag('js', new Date());
   gtag('config', 'G-65TKK711NK');
   </script>
@@ -16,26 +16,27 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23000'/%3E%3Cpath d='M10 36h44v6H10z' fill='%23fff'/%3E%3C/svg%3E">
   <style>
     :root{
-      /* --- Light palette per your reference screenshot --- */
-      --bg:#2a3140;            /* darker, night-friendly */
-      --panel:#1b212e;         /* dark surface */
-      --muted:#97a1b3;         /* secondary text */
-      --text:#e6eaf2;          /* primary text */
+      --bg:#2a3140;
+      --panel:#1b212e;
+      --muted:#97a1b3;
+      --text:#e6eaf2;
       --stroke:rgba(255,255,255,.12);
       --radius:14px;
       --shadow:0 10px 32px rgba(0,0,0,.35);
       --gap:16px;
 
-      /* Accents for UI (not belts) */
-      --accent:#2563eb;        /* blue */
-      --accent-2:#0ea5e9;      /* cyan */
+      --accent:#2563eb;
+      --accent-2:#0ea5e9;
 
-      /* Belt colors */
-      --yellow:#facc15;        /* 黄 */
-      --orange:#fb923c;        /* 橙 */
-      --green:#10b981;         /* 緑 */
-      --blue:#3b82f6;          /* 青 */
-      --bluebrown:#a16207;     /* 茶系 */
+      --yellow:#facc15;
+      --orange:#fb923c;
+      --green:#10b981;
+      --blue:#3b82f6;
+      --bluebrown:#a16207;
+
+      /* Desktop-only trim for study panel/card height. Adjust this to control how much shorter the card becomes on desktop. */
+      --card-trim: 0px; /* mobile & default */
+
       background:
         radial-gradient(900px 600px at 20% -10%, rgba(45,56,138,.25), transparent 60%),
         radial-gradient(800px 500px at 110% 0%, rgba(0,174,239,.18), transparent 50%), var(--bg);
@@ -43,10 +44,15 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
       line-height:1.55;
     }
+
+    /* Apply the 20px reduction to desktop only. Change 20px here to tweak later. */
+    @media (min-width: 901px){
+      :root{ --card-trim: 20px; }
+    }
+
     a{color:inherit;text-decoration:none}
     .container{max-width:1080px;margin:0 auto;padding:24px}
 
-    /* Header */
     header{position:sticky;top:0;z-index:50;background:linear-gradient(to bottom, rgba(26,32,41,.9), rgba(26,32,41,.6) 60%, transparent);backdrop-filter:saturate(140%) blur(6px)}
     .hdr{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px 24px}
     .brand{display:flex;align-items:center;gap:12px}
@@ -54,7 +60,6 @@
     .byline{color:var(--muted);font-size:13px;margin-left:8px;font-weight:500}
     .tag{color:var(--muted);font-size:13px}
 
-    /* Filters & actions */
     .filters{display:flex;flex-wrap:wrap;gap:10px}
     .chip{background:var(--panel);border:1px solid var(--stroke);padding:8px 12px;border-radius:999px;display:flex;gap:8px;align-items:center;cursor:pointer;user-select:none;box-shadow:none}
     .chip input{accent-color:var(--accent)}
@@ -65,23 +70,25 @@
     .btn.ghost{background:transparent;border:1px solid var(--stroke)}
     .btn.exit{background:linear-gradient(135deg,#4c0c0c,#c13838);border:0;color:#ffffff;font-weight:700;box-shadow:0 8px 24px rgba(220,38,38,.35)}
 
-    /* Bottom start button (mobile and desktop) */
     .start-bottom{position:fixed;left:0;right:0;bottom:10px;display:block;z-index:60;}
-    .start-bottom .inner{max-width:560px;margin:0 auto;display:flex;justify-content:center}
+    .start-bottom .inner{max-width:560px;margin:0 auto;display:flex;gap:10px;justify-content:center}
     .start-bottom .btn{width:90%;height:52px;font-weight:600}
-    @media (max-width: 720px){
-      /* Mobile: header should not be sticky */
-      header{position:static;top:auto}
-    }
+    @media (max-width: 720px){header{position:static;top:auto}}
 
-    /* Layout: list + study panel */
     .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
     @media (max-width: 900px){.grid{grid-template-columns:1fr}}
 
-  /* Mobile-only adjustments while studying */
   @media (max-width: 900px){
     body.studying #lists{display:none;}
     body.studying .study{margin-top:0;}
+    .study-ctrls{margin-bottom:10px;}
+    
+    /* Force extra scroll space below fixed buttons */
+    body::after{
+      content:"";
+      display:block;
+      height:35px; /* extra scroll room */
+    }
   }
 
     section{background:var(--panel);border:1px solid var(--stroke);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
@@ -94,8 +101,12 @@
     .tech-link:hover{transform:translateY(-2px);border-color:rgba(31,36,48,.25)}
     .tech-link:focus{outline:2px solid var(--accent)}
 
-    /* Study panel (Flashcards) */
-    .study{position:sticky;top:72px;height:calc(100dvh - 96px);display:flex;flex-direction:column;gap:12px}
+    /*
+      The study panel's height previously: calc(100dvh - 96px)
+      We now subtract --card-trim (desktop-only 20px by default) so the card/controls never get hidden under the header.
+    */
+    .study{position:sticky;top:72px;height:calc(100dvh - 96px - var(--card-trim));display:flex;flex-direction:column;gap:12px}
+
     .card{position:relative;flex:1;display:grid;place-items:center;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;box-shadow:var(--shadow);padding:24px;perspective:1200px}
     .card::before{content:"";position:absolute;inset:-2px;border-radius:20px;background:linear-gradient(135deg,#2d388a,#00aeef);opacity:0;transition:opacity .25s ease;z-index:0}
     body.studying .card::before{opacity:1}
@@ -108,19 +119,13 @@
     .meta{color:var(--muted);font-size:14px}
     .back{transform:rotateY(180deg)}
     .face img{max-width:100%;height:auto;border-radius:12px;border:1px solid var(--stroke)}
-    /* Image slab background for both desktop & mobile */
     .img-slab{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.2);border-radius:12px;padding:12px}
-    /* Desktop-only: ensure full image fits inside card without cropping */
-    @media (min-width: 901px){
-      /* Desktop: image always fits on screen and within card */
-      .img-slab img{max-height:min(85vh, calc(100% - 24px)); max-width:100%; width:auto; height:auto;}
-    }
+    @media (min-width: 901px){.img-slab img{max-height:min(85vh, calc(100% - 24px)); max-width:100%; width:auto; height:auto;}}
 
     .study-ctrls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;justify-content:center;max-width:300px;margin:0 auto}
     .study-ctrls .btn{height:44px}
     .hint{font-size:12px;color:var(--muted);text-align:center}
 
-    /* Modal */
     dialog::backdrop{background:rgba(31,36,48,.45)}
     dialog{border:1px solid var(--stroke);border-radius:14px;max-width:min(92vw,980px);max-height:92vh;padding:0;background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
     dialog[open]{display:flex;flex-direction:column}
@@ -130,21 +135,19 @@
     .modal-body img{max-width:100%;width:auto;height:auto;display:block;border-radius:10px;border:1px solid var(--stroke);object-fit:contain}
     @media (min-width: 901px){.modal-body img{max-height:85vh;max-width:88vw;width:auto;height:auto;}}
 
-    /* Belt color scopes for list headings */
     .yellow .belt-dot{background:var(--yellow)}
     .orange .belt-dot{background:var(--orange)}
     .green .belt-dot{background:var(--green)}
     .blue .belt-dot{background:var(--blue)}
     .bluebrown .belt-dot{background:var(--bluebrown)}
 
-    /* Japanese tooltip (romaji) */
     .jp{position:relative; display:inline-block; cursor:help; border-bottom:1px dashed rgba(18,21,27,.25)}
     .jp:focus{outline:2px solid var(--accent); outline-offset:2px}
     .jp::after{content:attr(data-romaji); position:absolute; left:50%; bottom:120%; transform:translateX(-50%); background:rgba(0,0,0,.85); color:#fff; font-size:12px; padding:4px 8px; border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s ease}
     .jp::before{content:""; position:absolute; left:50%; bottom:110%; transform:translateX(-50%); border:6px solid transparent; border-top-color:rgba(0,0,0,.85); opacity:0; transition:opacity .15s ease}
     .jp:hover::after,.jp:focus::after,.jp:hover::before,.jp:focus::before{opacity:1}
 
-    .byline{display:inline-flex;align-items:center;gap:6px;margin-left:10px;padding:4px 15px 4px 0px;border-radius:999px;border:0px solid var(--stroke);font-size:12px;color:#ffffff4e(--text);text-decoration:none;line-height:1}
+    .byline{display:inline-flex;align-items:center;gap:6px;margin-left:10px;padding:4px 15px 4px 0px;border-radius:999px;border:0px solid var(--stroke);font-size:12px;color:var(--muted);text-decoration:none;line-height:1}
   </style>
 </head>
 <body>
@@ -154,7 +157,7 @@
         <div class="belt-dot" style="background:linear-gradient(90deg,#0ea5e9,#2563eb)"></div>
         <div>
           <h1>Judo Flash Cards <span class="jp" data-romaji="jūdō">柔道</span><span class="byline">by Marcus Heier</span>
-            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Buy Marcus a Coffee', '#8297ff', 'B0B41JWO97');kofiwidget2.draw();</script> 
+            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Buy Marcus a Coffee', '#8297ff', 'B0B41JWO97');kofiwidget2.draw();</script>
           </h1>
           <div class="tag">Flip with Space • ←/→ to navigate</div>
         </div>
@@ -316,6 +319,7 @@
           <li><a href="pictures/sumi-otoshi.png" class="tech-link" data-name="Sumi-otoshi">Sumi-otoshi</a></li>
           <li><a href="pictures/yoko-wakare.png" class="tech-link" data-name="Yoko-wakare">Yoko-wakare</a></li>
           <li><a href="pictures/kata-guruma.png" class="tech-link" data-name="Kata-guruma">Kata-guruma</a></li>
+        </ul>
       </section>
     </div>
 
@@ -353,9 +357,6 @@
     </div>
     <div class="modal-body">
       <img id="modalImg" alt="Technique image" loading="lazy" />
-      <div style="margin-top:10px;font-size:13px;color:var(--muted)">
-        <a id="openNewTab" href="#" target="_blank" rel="noopener">Open in new tab</a>
-      </div>
     </div>
   </dialog>
 
@@ -385,6 +386,16 @@
       bluebrown: getComputedStyle(document.documentElement).getPropertyValue('--bluebrown').trim()
     };
 
+    // Human-friendly belt labels for UI
+    const BELT_LABEL = {
+      yellow: 'YELLOW',
+      orange: 'ORANGE',
+      green: 'GREEN',
+      blue: 'BLUE',
+      bluebrown: 'BLUE/BROWN'
+    };
+
+
     // ------- Belt filter logic ---------
     const filterInputs = Array.from(document.querySelectorAll('.filters input[type="checkbox"]'));
     function getActiveBelts(){
@@ -404,7 +415,6 @@
     const modal = document.getElementById('imgModal');
     const modalImg = document.getElementById('modalImg');
     const modalTitle = document.getElementById('modalTitle');
-    const openNewTab = document.getElementById('openNewTab');
     const modalBelt = document.getElementById('modalBelt');
     document.getElementById('closeModal').addEventListener('click', ()=> modal.close());
     // Intercept clicks on list items to open modal instead of navigating away
@@ -418,18 +428,13 @@
     modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.close(); });
     // Esc key cancel handler (ensures close)
     modal.addEventListener('cancel', (e)=>{ e.preventDefault(); modal.close(); });
-    // Click on backdrop closes
-    modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.close(); });
-    // Esc key should close (safety in case UA behavior is overridden)
-    modal.addEventListener('cancel', (e)=>{ e.preventDefault(); modal.close(); });
+
 
     function showModal(name, href, belt){
       modalTitle.textContent = name;
       modalImg.src = href; // same path you already use
       modalImg.alt = name;
-      openNewTab.href = href;
       const c = BELT_COLOR[belt] || '#d1d5db';
-      modal.style.setProperty('--belt-color', c);
       modalBelt.style.background = c;
       if(typeof modal.showModal === 'function'){ modal.showModal(); } else { modal.setAttribute('open',''); }
     }
@@ -502,7 +507,7 @@
     function render(){
       const t = deck[idx];
       frontName.textContent = t.name;
-      frontMeta.textContent = t.belt.toUpperCase();
+      frontMeta.textContent = BELT_LABEL[t.belt] || t.belt.toUpperCase();
       backContent.innerHTML = `<div class="img-slab"><img src="${t.href}" alt="${t.name}"></div>`;
       progressHint.textContent = `${idx+1} / ${deck.length}`;
       setBeltAccent(t.belt);
@@ -556,14 +561,7 @@
       if(dx < 0) next(); else prev();
     }, {passive:true});
 
-    // Initialize button visibility on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      const isMobile = window.matchMedia('(max-width: 720px)').matches;
-      if (!isMobile) {
-        // Ensure bottom start button is visible on desktop
-        startBottom.style.display = 'block';
-      }
-    });
+
   </script>
 </body>
 </html>
