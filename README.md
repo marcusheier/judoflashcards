@@ -23,5 +23,5 @@ Google Analytics measurement ID `G-65TKK711NK` is enabled in privacy-restricted 
 - `style.css` – visual styles
 - `script.js` – flashcard behavior
 - `analytics.js` – privacy-restricted Google Analytics setup
-- `pictures/` – original image files plus optimized WebP versions
-- `favicon-package/` – full-resolution icon source and packaging notes
+- `pictures/` – optimized WebP files and the GIF animations used by the flashcards
+- Root favicon files – browser, Apple touch, and Android app icons
